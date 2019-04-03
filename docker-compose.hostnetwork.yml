@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  coredns:
+    image: coredns/coredns:1.4.0
+    container_name: coredns
+    command: ["-dns.port","1053"]
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1053"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      
+  dnsperf:
+    build:
+      context: dnsperf
+    command: ["-c", "/wait-for.sh 127.0.0.1:1053 && dnsperf -n 4 -d /top-100k.dnsperf -p 1053 -s 127.0.0.1"]
+    network_mode: host
+    entrypoint: ["/bin/sh"]   
+    depends_on:
+      - coredns
