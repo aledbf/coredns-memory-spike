@@ -10,8 +10,8 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://0.0.0.0:8081"]
       interval: 5s
-      timeout: 10s
-      retries: 3
+      timeout: 20s
+      retries: 10
 
   coredns:
     image: coredns/coredns:1.4.0
@@ -22,14 +22,15 @@ services:
       - kubernetes
 
     volumes:
-      - ./Corefile:/Corefile
+      - ./Corefile-dnsperf:/Corefile
 
-  dnsperf:
-    build:
-      context: dnsperf
-    container_name: dnsperf
-    command: ["/bin/bash", "-c", "/wait-for.sh localhost:1053 && dnsperf -n 4 -d /top-100k.dnsperf -p 1053 -s 127.0.0.1"]
+  go-dnsperf:
+    image: mikkeloscar/go-dnsperf:godns-latest
+    container_name: go-dnsperf
+    entrypoint: ["sh", "-c", "sleep 10 && /go-dnsperf"]
     network_mode: host
     depends_on:
       - kubernetes
       - coredns
+    volumes:
+      - ./resolv.conf:/etc/resolv.conf
