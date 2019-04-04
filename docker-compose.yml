@@ -18,8 +18,8 @@ services:
   dnsperf:
     build:
       context: dnsperf
-    command: ["-c", "/wait-for.sh coredns:1053 && dnsperf -n 4 -d /top-100k.dnsperf -p 1053 -s coredns"]
-    entrypoint: ["/bin/sh"]   
+    container_name: dnsperf
+    command: ["/bin/bash", "-c", "/wait-for.sh coredns:1053 && dnsperf -n 4 -d /top-100k.dnsperf -p 1053 -s coredns"]
     depends_on:
       - coredns
     links:

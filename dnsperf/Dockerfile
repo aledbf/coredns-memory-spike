@@ -15,6 +15,7 @@ RUN apt update && \
     libprotobuf-c-dev libfstrm-dev liblmdb-dev \
     netcat \
     unzip \
+    bash \
     make
 
 ENV DNSPERF_VERSION 2.2.1
