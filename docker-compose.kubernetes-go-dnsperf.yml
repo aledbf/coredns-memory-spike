@@ -25,8 +25,7 @@ services:
       - ./Corefile-dnsperf:/Corefile
 
   go-dnsperf:
-    image: mikkeloscar/go-dnsperf:godns-latest
-    container_name: go-dnsperf
+    image: mikkeloscar/go-dnsperf:latest
     entrypoint: ["sh", "-c", "sleep 10 && /go-dnsperf"]
     network_mode: host
     depends_on:
