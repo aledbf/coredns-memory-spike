@@ -1,0 +1,7 @@
+[prune]
+  go-tests = true
+  unused-packages = true
+
+[[constraint]]
+  name = "sigs.k8s.io/testing_frameworks"
+  version = "0.1.1"

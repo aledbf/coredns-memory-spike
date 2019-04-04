@@ -1,0 +1,18 @@
+.:1053 {
+    #errors
+    health
+
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+        endpoint http://localhost:8081
+        pods insecure
+        upstream        
+        fallthrough in-addr.arpa ip6.arpa
+    }
+
+    #proxy . 8.8.8.8 1.1.1.1
+
+    prometheus :9153
+    pprof :6061
+    cache 30
+    reload
+}
