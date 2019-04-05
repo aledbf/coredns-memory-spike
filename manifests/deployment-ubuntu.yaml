@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-dnsperf-ubuntu
+  labels:
+    application: go-dnsperf
+spec:
+  replicas: 30
+  selector:
+    matchLabels:
+      application: go-dnsperf
+      base: ubuntu
+  template:
+    metadata:
+      labels:
+        application: go-dnsperf
+        base: ubuntu
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - coredns-worker2
+                  - coredns-worker3
+      dnsPolicy: "None"
+      dnsConfig:      
+        nameservers:
+          # assing IP address of coredns service
+          - 10.101.89.104
+        searches:
+          - default.svc.cluster.local
+          - svc.cluster.local
+          - cluster.local
+        options:
+          - name: ndots
+            value: "5"
+      containers:
+      - name: go-dnsperf
+        image: mikkeloscar/go-dnsperf:latest
+        imagePullPolicy: Always
+        env:
+        - name: GODEBUG
+          value: netdns=cgo
+        args:
+        - -names=example.org
+        - -rps=100
+        - -timeout=10s
+        - -enable-logging=true

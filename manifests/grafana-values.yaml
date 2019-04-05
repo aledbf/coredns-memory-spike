@@ -1,0 +1,137 @@
+rbac:
+  create: true
+  pspEnabled: true
+  pspUseAppArmor: true
+  namespaced: false
+serviceAccount:
+  create: true
+  name:
+
+replicas: 1
+
+deploymentStrategy: RollingUpdate
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+
+env:
+  GF_EXPLORE_ENABLED: true
+
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 60
+  timeoutSeconds: 30
+  failureThreshold: 10
+
+image:
+  repository: grafana/grafana
+  tag: 6.0.2
+  pullPolicy: IfNotPresent
+
+securityContext:
+  runAsUser: 472
+  fsGroup: 472
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+ingress:
+  enabled: false
+
+persistence:
+  enabled: false
+
+initChownData:
+  enabled: true
+
+  image:
+    repository: busybox
+    tag: "1.30"
+    pullPolicy: IfNotPresent
+
+adminUser: admin
+adminPassword: coredns
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.default.svc.cluster.local
+      access: proxy
+      isDefault: true
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      editable: true
+      options:
+        path: /var/lib/grafana/dashboards/default
+
+dashboards:
+  default:
+    prometheus-stats:
+      gnetId: 2
+      revision: 2
+      datasource: Prometheus
+    coredns:
+      file: dashboards/coredns_rev1.json
+    kubernetes:
+      file: dashboards/kubernetes-cluster_rev1.json
+
+grafana.ini:
+  paths:
+    data: /var/lib/grafana/data
+    logs: /var/log/grafana
+    plugins: /var/lib/grafana/plugins
+    provisioning: /etc/grafana/provisioning
+  analytics:
+    check_for_updates: true
+  log:
+    mode: console
+  grafana_net:
+    url: https://grafana.net
+
+## Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders
+## Requires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards
+sidecar:
+  image: kiwigrid/k8s-sidecar:0.0.13
+  imagePullPolicy: IfNotPresent
+  resources: {}
+#   limits:
+#     cpu: 100m
+#     memory: 100Mi
+#   requests:
+#     cpu: 50m
+#     memory: 50Mi
+  dashboards:
+    enabled: false
+    # label that the configmaps with dashboards are marked with
+    label: grafana_dashboard
+    # folder in the pod that should hold the collected dashboards
+    folder: /tmp/dashboards
+    # If specified, the sidecar will search for dashboard config-maps inside this namespace.
+    # Otherwise the namespace in which the sidecar is running will be used.
+    # It's also possible to specify ALL to search in all namespaces
+    searchNamespace: null
+  datasources:
+    enabled: true
+    # label that the configmaps with datasources are marked with
+    label: grafana_datasource
+    # If specified, the sidecar will search for datasource config-maps inside this namespace.
+    # Otherwise the namespace in which the sidecar is running will be used.
+    # It's also possible to specify ALL to search in all namespaces
+    searchNamespace: null
