@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-set -x
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -23,11 +22,6 @@ kubectl config set-context kubernetes-admin@${KIND_CLUSTER_NAME}
 
 echo "Kubernetes cluster:"
 kubectl get nodes -o wide
-
-#kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
-
-echo "Installing coredns"
-kubectl apply -f manifests/coredns.yaml
 
 echo "Installing Prometheus and Grafana"
 helm repo update
@@ -54,7 +48,16 @@ helm install --name grafana -f manifests/grafana-values.yaml stable/grafana
 
 sleep 60
 
-echo "Installing go-dnsperf scaled to 30"
-kubectl apply -f manifests/deployment-ubuntu.yaml
+if [[ $1 = "fix-iptables" ]]; then
+    echo "Installing k8s-dns-node-cache"
+    kubectl apply -f manifests/local-node-dns.yaml
+    sleep 60
+    echo "Installing go-dnsperf scaled to 60"
+    kubectl apply -f manifests/deployment-ubuntu.localcache.yaml
+else
+    echo "Installing go-dnsperf scaled to 60"
+    kubectl apply -f manifests/deployment-ubuntu.yaml
+fi
 
+echo "Open http://localhost:3000 user admin and password coredns"
 kubectl --namespace default port-forward svc/grafana 3000:80

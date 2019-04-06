@@ -16,6 +16,18 @@ spec:
         application: go-dnsperf
         base: ubuntu
     spec:
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          # assing IP address of node cache service
+          - 169.254.20.10
+        searches:
+          - default.svc.cluster.local
+          - svc.cluster.local
+          - cluster.local
+        options:
+          - name: ndots
+            value: "5"
       containers:
       - name: go-dnsperf
         image: mikkeloscar/go-dnsperf:latest
